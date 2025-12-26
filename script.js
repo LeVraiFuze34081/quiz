@@ -240,11 +240,11 @@ function loadQuestionSolo() {
       btn.textContent = opt;
       btn.dataset.val = opt;
       btn.onclick = () => {
-        currentSelectedOption = opt; // On stocke le choix
+        currentSelectedOption = opt; 
         answerInput.value = opt; 
-        submitAnswerSolo(); 
-        const allBtns = optionsContainer.querySelectorAll('button');
+        const allBtns = optionsContainer.querySelectorAll('.option-btn');
         allBtns.forEach(b => b.disabled = true);
+        submitAnswerSolo(); 
       };
       optionsContainer.appendChild(btn);
     });
@@ -328,23 +328,50 @@ async function submitAnswerSolo(forceTimeout = false) {
   }
 }
 
-function endQuestionSolo(correctAnswers, isSuccess) {
-  clearInterval(timer);
+function endQuestionSolo(correctAnswers, isCorrect) {
   showingCorrection = true;
-  heartsDiv.textContent = '\u00A0';
-  timerDiv.textContent = '\u00A0';
+  clearInterval(timer);
 
-  correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
-  correctionDiv.classList.remove('correct', 'incorrect');
-  correctionDiv.classList.add('show', isSuccess ? 'correct' : 'incorrect');
+  // Désactivation de l'input texte
   answerInput.disabled = true;
-  timeLeft = 5;
-  timer = setInterval(() => {
-    timeLeft--;
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      correctionDiv.classList.remove('show', 'correct', 'incorrect');
-      nextQuestionSolo();
+
+  // Désactivation de TOUS les boutons QCM / Vrai-Faux
+  const allBtns = optionsContainer.querySelectorAll('.option-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+  });
+
+  // Affichage du bandeau de correction
+  correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
+  correctionDiv.classList.add('show');
+  
+  if (isCorrect) {
+    correctionDiv.classList.remove('incorrect');
+    correctionDiv.classList.add('correct');
+  } else {
+    correctionDiv.classList.remove('correct');
+    correctionDiv.classList.add('incorrect');
+  }
+
+  // Petit timer de 3 secondes avant la suite en solo (plus court qu'en multi)
+  let timeLeftCorr = 3;
+  timerDiv.textContent = `Correction : ${timeLeftCorr}s`;
+  
+  const corrInt = setInterval(() => {
+    timeLeftCorr--;
+    if (timeLeftCorr > 0) {
+      timerDiv.textContent = `Correction : ${timeLeftCorr}s`;
+    } else {
+      clearInterval(corrInt);
+      timerDiv.textContent = '';
+      
+      // Passage à la question suivante
+      idx++;
+      if (idx < selected.length) {
+        loadQuestionSolo();
+      } else {
+        showFinalSolo();
+      }
     }
   }, 1000);
 }
