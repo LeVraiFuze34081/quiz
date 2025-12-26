@@ -508,6 +508,9 @@ function loadQuestionMulti(question, index, total) {
 }
 
 function showCorrectionMulti(correctAnswers) {
+  clearInterval(timer); 
+  timer = null;
+
   correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
   correctionDiv.classList.add('show');
 
@@ -522,12 +525,13 @@ function showCorrectionMulti(correctAnswers) {
   let t = 5;
   timerDiv.textContent = `Correction : ${t}s`;
 
-  const interval = setInterval(() => {
+  timer = setInterval(() => {
     t--;
     timerDiv.textContent = `Correction : ${t}s`;
 
     if (t <= 0) {
-      clearInterval(interval);
+      clearInterval(timer);
+      timer = null;
       correctionDiv.classList.remove('show');
       correctionDiv.classList.remove('correct', 'incorrect'); 
       showingCorrection = false;
