@@ -330,7 +330,10 @@ button:hover { opacity: 0.9; }
 .option-btn[data-val="Faux"] { border-color: var(--danger); }
 
 .option-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
+  box-shadow: none !important;
 }
+
+.hidden { display: none !important; }
