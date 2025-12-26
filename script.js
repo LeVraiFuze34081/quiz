@@ -221,14 +221,14 @@ function loadQuestionSolo() {
   optionsContainer.innerHTML = '';
   optionsContainer.classList.add('hidden');
   answerInput.classList.remove('hidden');
+  heartsDiv.style.visibility = 'visible'; // On réaffiche les coeurs par défaut
 
   // Affichage selon le type
   if (q.type === 'qcm' || q.type === 'vf') {
     answerInput.classList.add('hidden');
     optionsContainer.classList.remove('hidden');
+    heartsDiv.style.visibility = 'hidden'; // On cache les coeurs (1 seule chance)
     
-    // Mélange des options seulement pour les QCM (pas Vrai/Faux) pour varier l'ordre si désiré
-    // Note: Pour V/F on garde l'ordre "Vrai" puis "Faux" généralement
     let opts = q.options;
     if(q.type === 'qcm') {
        opts = [...q.options].sort(() => Math.random() - 0.5);
@@ -240,10 +240,9 @@ function loadQuestionSolo() {
       btn.textContent = opt;
       btn.dataset.val = opt;
       btn.onclick = () => {
-        // En solo, cliquer valide directement
-        answerInput.value = opt; // On remplit l'input caché pour la logique existante
-        submitAnswerSolo();
-        // Désactiver les boutons après clic pour éviter le spam
+        answerInput.value = opt; 
+        submitAnswerSolo(); 
+        // Désactivation immédiate de tous les boutons pour empêcher le double clic
         const allBtns = optionsContainer.querySelectorAll('button');
         allBtns.forEach(b => b.disabled = true);
       };
@@ -252,9 +251,9 @@ function loadQuestionSolo() {
   } else {
     // Mode Texte classique
     answerInput.focus();
+    updateHearts();
   }
 
-  updateHearts();
   updateTimer();
   timer = setInterval(() => {
     timeLeft--; updateTimer();
@@ -307,7 +306,13 @@ async function submitAnswerSolo(forceTimeout = false) {
         playerScoreDiv.textContent = `Score : ${score}`;
         endQuestionSolo(correctAnswers, true);
     } else {
-        tries--;
+        // Logique modifiée : Si QCM ou VF, une erreur = 0 vies restantes direct
+        if (currentQ.type === 'qcm' || currentQ.type === 'vf') {
+            tries = 0;
+        } else {
+            tries--;
+        }
+
         if (tries <= 0 || forceTimeout) {
             log.push({ ...currentQ, a: correctAnswers, user: answerInput.value || 'Aucune', ok: false, points: 0 });
             endQuestionSolo(correctAnswers, false);
@@ -545,11 +550,13 @@ function loadQuestionMulti(question, index, total) {
   optionsContainer.innerHTML = '';
   optionsContainer.classList.add('hidden');
   answerInput.classList.remove('hidden');
+  heartsDiv.style.visibility = 'visible'; // On réaffiche par défaut
 
   // Gestion des types
   if (question.type === 'qcm' || question.type === 'vf') {
     answerInput.classList.add('hidden');
     optionsContainer.classList.remove('hidden');
+    heartsDiv.style.visibility = 'hidden'; // On cache les vies car c'est du "one shot"
 
     let opts = question.options;
     if (question.type === 'qcm') {
@@ -567,7 +574,7 @@ function loadQuestionMulti(question, index, total) {
           action: 'submitAnswer',
           answer: opt
         }));
-        // On désactive visuellement
+        // On désactive visuellement pour éviter le spam
         const allBtns = optionsContainer.querySelectorAll('button');
         allBtns.forEach(b => b.disabled = true);
       };
@@ -577,15 +584,14 @@ function loadQuestionMulti(question, index, total) {
   } else {
     // Mode texte
     answerInput.focus();
+    updateHearts();
   }
 
-  updateHearts();
   updateTimer();
   timer = setInterval(() => {
     timeLeft--; updateTimer();
     if (timeLeft <= 0) {
       answerInput.disabled = true;
-      // Désactiver aussi les boutons s'ils sont là
       const allBtns = optionsContainer.querySelectorAll('button');
       allBtns.forEach(b => b.disabled = true);
       
