@@ -491,32 +491,9 @@ function connectSocket(onOpenCallback) {
       case 'newQuestion':
         loadQuestionMulti(msg.question, msg.index, msg.total);
         break;
-case 'revealAnswer':
-            showingCorrection = true;
-            const correctAnswers = msg.correctAnswers;
-            
-            // On vérifie la réponse : texte OU bouton
-            const userVal = normalizeAnswer(answerInput.value || currentSelectedOption);
-            const isCorrect = correctAnswers.map(normalizeAnswer).includes(userVal);
-
-            correctionDiv.textContent = `La réponse était : ${correctAnswers.join(' / ')}`;
-            correctionDiv.classList.add('show');
-
-            // On vérifie si l'utilisateur a VRAIMENT répondu quelque chose
-            const hasAnswered = userVal !== "";
-
-            if (hasAnswered && isCorrect) {
-                correctionDiv.classList.remove('incorrect');
-                correctionDiv.classList.add('correct');
-            } else {
-                correctionDiv.classList.remove('correct');
-                correctionDiv.classList.add('incorrect');
-            }
-
-            answerInput.disabled = true;
-            const allBtns = optionsContainer.querySelectorAll('button');
-            allBtns.forEach(b => b.disabled = true);
-            break;
+      case 'revealAnswer':
+        showCorrectionMulti(msg.correctAnswers);
+        break;
       case 'answerResult':
         handleAnswerResult(msg.correct, msg.points, msg.correctAnswers);
         break;
@@ -560,6 +537,7 @@ function updateLobbyPlayers(players) {
 
 function loadQuestionMulti(question, index, total) {
   clearInterval(timer);
+  timerDiv.textContent = '';
   showingCorrection = false;
   timeLeft = 20; tries = 4;
   currentQuestionIndex = index;
@@ -625,33 +603,38 @@ function loadQuestionMulti(question, index, total) {
 }
 
 function showCorrectionMulti(correctAnswers) {
-  clearInterval(timer); 
-  timer = null;
+  showingCorrection = true;
+  clearInterval(timer);
+  
+  // Désactivation de TOUS les boutons de réponse (QCM/VF) pour tout le monde
+  const allBtns = optionsContainer.querySelectorAll('.option-btn');
+  allBtns.forEach(b => b.disabled = true);
+  answerInput.disabled = true;
 
-  correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
+  const userVal = normalizeAnswer(answerInput.value || currentSelectedOption);
+  const isCorrect = correctAnswers.map(normalizeAnswer).includes(userVal);
+
+  correctionDiv.innerHTML = `La réponse était : ${correctAnswers.join(' / ')}`;
   correctionDiv.classList.add('show');
-
-  if (!correctionDiv.classList.contains('correct')) {
-    correctionDiv.classList.add('incorrect');
+  
+  // Couleur du bandeau
+  if (userVal !== "" && isCorrect) {
+    correctionDiv.className = 'show correct';
+  } else {
+    correctionDiv.className = 'show incorrect';
   }
 
-  showingCorrection = true;
-  answerInput.disabled = true;
-  heartsDiv.textContent = '\u00A0';
-
-  let t = 5;
-  timerDiv.textContent = `Correction : ${t}s`;
-
+  // Gestion du timer de 5 secondes "Correction : Xs"
+  let timeLeftCorr = 5;
+  timerDiv.textContent = `Correction : ${timeLeftCorr}s`;
+  
   timer = setInterval(() => {
-    t--;
-    timerDiv.textContent = `Correction : ${t}s`;
-
-    if (t <= 0) {
+    timeLeftCorr--;
+    if (timeLeftCorr > 0) {
+      timerDiv.textContent = `Correction : ${timeLeftCorr}s`;
+    } else {
       clearInterval(timer);
-      timer = null;
-      correctionDiv.classList.remove('show');
-      correctionDiv.classList.remove('correct', 'incorrect'); 
-      showingCorrection = false;
+      timerDiv.textContent = '';
     }
   }, 1000);
 }
