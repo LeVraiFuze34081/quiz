@@ -290,27 +290,47 @@ button:hover { opacity: 0.9; }
 }
 
 
+
+#options-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+#options-container.hidden {
+  display: none;
+}
+
 .option-btn {
-    background: var(--panel);
-    border: 2px solid var(--accent);
-    color: var(--text);
-    padding: 12px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 16px;
-    min-width: 120px;
+  padding: 20px;
+  font-size: 20px;
+  background: #0f3057;
+  color: white;
+  border: 2px solid #2f5fa7;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .option-btn:hover {
-    background: var(--accent);
-    transform: translateY(-2px);
+  background: #1e4d85;
+  transform: translateY(-2px);
+  border-color: var(--accent);
 }
 
 .option-btn:active {
-    transform: translateY(0);
+  transform: translateY(1px);
 }
 
-.hidden {
-    display: none !important;
+.option-btn[data-val="Vrai"] { border-color: var(--success); }
+.option-btn[data-val="Faux"] { border-color: var(--danger); }
+
+.option-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
