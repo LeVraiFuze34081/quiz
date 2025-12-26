@@ -335,14 +335,14 @@ function endQuestionSolo(correctAnswers, isCorrect) {
   // Désactivation de l'input texte
   answerInput.disabled = true;
 
-  // Désactivation de TOUS les boutons QCM / Vrai-Faux
+  // Désactivation visuelle de TOUS les boutons QCM / Vrai-Faux
   const allBtns = optionsContainer.querySelectorAll('.option-btn');
   allBtns.forEach(b => {
     b.disabled = true;
   });
 
   // Affichage du bandeau de correction
-  correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
+  correctionDiv.textContent = `La réponse était : ${correctAnswers.join(' / ')}`;
   correctionDiv.classList.add('show');
   
   if (isCorrect) {
@@ -353,7 +353,7 @@ function endQuestionSolo(correctAnswers, isCorrect) {
     correctionDiv.classList.add('incorrect');
   }
 
-  // Petit timer de 3 secondes avant la suite en solo (plus court qu'en multi)
+  // Timer de 3 secondes avant la suite
   let timeLeftCorr = 3;
   timerDiv.textContent = `Correction : ${timeLeftCorr}s`;
   
@@ -365,12 +365,13 @@ function endQuestionSolo(correctAnswers, isCorrect) {
       clearInterval(corrInt);
       timerDiv.textContent = '';
       
-      // Passage à la question suivante
+      // Passage à la question suivante ou fin
       idx++;
       if (idx < selected.length) {
         loadQuestionSolo();
       } else {
-        showFinalSolo();
+        // CORRECTION ICI : On utilise le bon nom de fonction de ton fichier script.js
+        showFinalResults();
       }
     }
   }, 1000);
