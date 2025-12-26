@@ -491,9 +491,31 @@ function connectSocket(onOpenCallback) {
       case 'newQuestion':
         loadQuestionMulti(msg.question, msg.index, msg.total);
         break;
-      case 'revealAnswer':
-        showCorrectionMulti(msg.correctAnswers);
-        break;
+// Dans la section socket.onmessage, trouvez le cas 'revealAnswer'
+        case 'revealAnswer':
+            showingCorrection = true;
+            const correctAnswers = msg.correctAnswers;
+            const userVal = normalizeAnswer(answerInput.value);
+            const isCorrect = correctAnswers.map(normalizeAnswer).includes(userVal);
+
+            correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
+            correctionDiv.classList.add('show');
+
+            // --- LOGIQUE CORRIGÉE : Si l'input est vide ou incorrect -> ROUGE ---
+            if (userVal !== "" && isCorrect) {
+                correctionDiv.classList.remove('incorrect');
+                correctionDiv.classList.add('correct');
+            } else {
+                // Si l'utilisateur n'a pas répondu (userVal === "") ou s'est trompé
+                correctionDiv.classList.remove('correct');
+                correctionDiv.classList.add('incorrect');
+            }
+
+            // On s'assure de cacher l'input et les options
+            answerInput.disabled = true;
+            const allBtns = optionsContainer.querySelectorAll('button');
+            allBtns.forEach(b => b.disabled = true);
+            break;
       case 'answerResult':
         handleAnswerResult(msg.correct, msg.points, msg.correctAnswers);
         break;
