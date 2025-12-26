@@ -486,25 +486,60 @@ function updateLobbyPlayers(players) {
   }
 }
 
-function loadQuestionMulti(question, index, total) {
-  clearInterval(timer);
-  showingCorrection = false;
-  timeLeft = 20; tries = 4;
-  currentQuestionIndex = index;
-  questionNumberDiv.textContent = `Question ${index} / ${total}`;
-  questionTextDiv.textContent = question.q;
-  correctionDiv.classList.remove('show');
-  answerInput.value=''; answerInput.disabled=false; answerInput.focus();
-  updateHearts();
-  updateTimer();
-  timer = setInterval(() => {
-    timeLeft--; updateTimer();
-    if (timeLeft <= 0) {
-      answerInput.disabled = true;
-      socket.send(JSON.stringify({ action: 'timeout', index }));
-      clearInterval(timer);
+const optionsContainer = document.getElementById('options-container');
+
+function loadQuestionMulti(data) {
+    if (timer) {
+        clearInterval(timer);
+        timer = null;
     }
-  }, 1000);
+    const q = data.question;
+    const optionsContainer = document.getElementById('options-container');
+    questionDiv.textContent = q.q;
+    questionNumberDiv.textContent = `Question ${data.index} / ${data.total}`;
+    answerInput.value = '';
+    answerInput.disabled = false;
+    showingCorrection = false;
+    correctionDiv.classList.remove('show', 'correct', 'incorrect');
+    heartsDiv.textContent = '♥♥♥♥';
+    optionsContainer.innerHTML = '';
+
+    if (q.type === 'qcm' || q.type === 'vrai-faux') {
+        answerInput.classList.add('hidden');
+        optionsContainer.classList.remove('hidden');
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.textContent = opt;
+            btn.className = 'option-btn'; 
+            btn.onclick = () => {
+                if (!showingCorrection) {
+                    const allBtns = optionsContainer.querySelectorAll('button');
+                    allBtns.forEach(b => b.disabled = true);
+                    socket.send(JSON.stringify({ 
+                        action: 'submitAnswer', 
+                        answer: opt 
+                    }));
+                }
+            };
+            optionsContainer.appendChild(btn);
+        });
+    } else {
+        answerInput.classList.remove('hidden');
+        optionsContainer.classList.add('hidden');
+        answerInput.focus();
+    }
+    let timeLeft = 20;
+    timerDiv.textContent = `Temps restant : ${timeLeft}s`;
+    timer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft >= 0) {
+            timerDiv.textContent = `Temps restant : ${timeLeft}s`;
+        }
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timer = null;
+        }
+    }, 1000);
 }
 
 function showCorrectionMulti(correctAnswers) {
