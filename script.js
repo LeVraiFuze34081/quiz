@@ -66,6 +66,7 @@ const heartsDiv = document.getElementById('hearts');
 const timerDiv = document.getElementById('timer');
 
 const answerInput = document.getElementById('answer-input');
+const optionsContainer = document.getElementById('options-container');
 
 let socket = null;
 let playerName = '';
@@ -76,7 +77,7 @@ let currentQuestionIndex = null;
 let selected = [], idx = 0, score = 0, timer = null, timeLeft = 20, tries = 4, log = [], showingCorrection = false;
 
 
-  function resetGameState() {
+function resetGameState() {
   clearInterval(timer);
   timer = null;
   showingCorrection = false;
@@ -95,6 +96,9 @@ let selected = [], idx = 0, score = 0, timer = null, timeLeft = 20, tries = 4, l
 
   answerInput.disabled = false;
   answerInput.value = '';
+  optionsContainer.innerHTML = '';
+  optionsContainer.classList.add('hidden');
+  answerInput.classList.remove('hidden');
 
   multiStarted = false;
   roomId = '';
@@ -210,7 +214,46 @@ function loadQuestionSolo() {
   questionNumberDiv.textContent = `Question ${idx+1} / ${selected.length}`;
   questionTextDiv.textContent = q.q;
   correctionDiv.classList.remove('show');
-  answerInput.value = ''; answerInput.disabled = false; answerInput.focus();
+  
+  // Reset de l'interface
+  answerInput.value = ''; 
+  answerInput.disabled = false;
+  optionsContainer.innerHTML = '';
+  optionsContainer.classList.add('hidden');
+  answerInput.classList.remove('hidden');
+
+  // Affichage selon le type
+  if (q.type === 'qcm' || q.type === 'vf') {
+    answerInput.classList.add('hidden');
+    optionsContainer.classList.remove('hidden');
+    
+    // Mélange des options seulement pour les QCM (pas Vrai/Faux) pour varier l'ordre si désiré
+    // Note: Pour V/F on garde l'ordre "Vrai" puis "Faux" généralement
+    let opts = q.options;
+    if(q.type === 'qcm') {
+       opts = [...q.options].sort(() => Math.random() - 0.5);
+    }
+
+    opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.dataset.val = opt;
+      btn.onclick = () => {
+        // En solo, cliquer valide directement
+        answerInput.value = opt; // On remplit l'input caché pour la logique existante
+        submitAnswerSolo();
+        // Désactiver les boutons après clic pour éviter le spam
+        const allBtns = optionsContainer.querySelectorAll('button');
+        allBtns.forEach(b => b.disabled = true);
+      };
+      optionsContainer.appendChild(btn);
+    });
+  } else {
+    // Mode Texte classique
+    answerInput.focus();
+  }
+
   updateHearts();
   updateTimer();
   timer = setInterval(() => {
@@ -220,6 +263,7 @@ function loadQuestionSolo() {
     }
   }, 1000);
 }
+
 function updateTimer() {
   if (showingCorrection) {
     if (multiStarted) {
@@ -486,60 +530,69 @@ function updateLobbyPlayers(players) {
   }
 }
 
-const optionsContainer = document.getElementById('options-container');
+function loadQuestionMulti(question, index, total) {
+  clearInterval(timer);
+  showingCorrection = false;
+  timeLeft = 20; tries = 4;
+  currentQuestionIndex = index;
+  questionNumberDiv.textContent = `Question ${index} / ${total}`;
+  questionTextDiv.textContent = question.q;
+  correctionDiv.classList.remove('show');
+  
+  // Reset UI
+  answerInput.value=''; 
+  answerInput.disabled=false; 
+  optionsContainer.innerHTML = '';
+  optionsContainer.classList.add('hidden');
+  answerInput.classList.remove('hidden');
 
-function loadQuestionMulti(data) {
-    if (timer) {
-        clearInterval(timer);
-        timer = null;
-    }
-    const q = data.question;
-    const optionsContainer = document.getElementById('options-container');
-    questionDiv.textContent = q.q;
-    questionNumberDiv.textContent = `Question ${data.index} / ${data.total}`;
-    answerInput.value = '';
-    answerInput.disabled = false;
-    showingCorrection = false;
-    correctionDiv.classList.remove('show', 'correct', 'incorrect');
-    heartsDiv.textContent = '♥♥♥♥';
-    optionsContainer.innerHTML = '';
+  // Gestion des types
+  if (question.type === 'qcm' || question.type === 'vf') {
+    answerInput.classList.add('hidden');
+    optionsContainer.classList.remove('hidden');
 
-    if (q.type === 'qcm' || q.type === 'vrai-faux') {
-        answerInput.classList.add('hidden');
-        optionsContainer.classList.remove('hidden');
-        q.options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.textContent = opt;
-            btn.className = 'option-btn'; 
-            btn.onclick = () => {
-                if (!showingCorrection) {
-                    const allBtns = optionsContainer.querySelectorAll('button');
-                    allBtns.forEach(b => b.disabled = true);
-                    socket.send(JSON.stringify({ 
-                        action: 'submitAnswer', 
-                        answer: opt 
-                    }));
-                }
-            };
-            optionsContainer.appendChild(btn);
-        });
-    } else {
-        answerInput.classList.remove('hidden');
-        optionsContainer.classList.add('hidden');
-        answerInput.focus();
+    let opts = question.options;
+    if (question.type === 'qcm') {
+       opts = [...question.options].sort(() => Math.random() - 0.5);
     }
-    let timeLeft = 20;
-    timerDiv.textContent = `Temps restant : ${timeLeft}s`;
-    timer = setInterval(() => {
-        timeLeft--;
-        if (timeLeft >= 0) {
-            timerDiv.textContent = `Temps restant : ${timeLeft}s`;
-        }
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            timer = null;
-        }
-    }, 1000);
+
+    opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.dataset.val = opt;
+      btn.onclick = () => {
+        // En multi, on envoie via websocket
+        socket.send(JSON.stringify({
+          action: 'submitAnswer',
+          answer: opt
+        }));
+        // On désactive visuellement
+        const allBtns = optionsContainer.querySelectorAll('button');
+        allBtns.forEach(b => b.disabled = true);
+      };
+      optionsContainer.appendChild(btn);
+    });
+
+  } else {
+    // Mode texte
+    answerInput.focus();
+  }
+
+  updateHearts();
+  updateTimer();
+  timer = setInterval(() => {
+    timeLeft--; updateTimer();
+    if (timeLeft <= 0) {
+      answerInput.disabled = true;
+      // Désactiver aussi les boutons s'ils sont là
+      const allBtns = optionsContainer.querySelectorAll('button');
+      allBtns.forEach(b => b.disabled = true);
+      
+      socket.send(JSON.stringify({ action: 'timeout', index }));
+      clearInterval(timer);
+    }
+  }, 1000);
 }
 
 function showCorrectionMulti(correctAnswers) {
