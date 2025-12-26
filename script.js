@@ -75,7 +75,7 @@ let isHost = false;
 let multiStarted = false;
 let currentQuestionIndex = null;
 let selected = [], idx = 0, score = 0, timer = null, timeLeft = 20, tries = 4, log = [], showingCorrection = false;
-
+let currentSelectedOption = "";
 
 function resetGameState() {
   clearInterval(timer);
@@ -240,9 +240,9 @@ function loadQuestionSolo() {
       btn.textContent = opt;
       btn.dataset.val = opt;
       btn.onclick = () => {
+        currentSelectedOption = opt; // On stocke le choix
         answerInput.value = opt; 
         submitAnswerSolo(); 
-        // Désactivation immédiate de tous les boutons pour empêcher le double clic
         const allBtns = optionsContainer.querySelectorAll('button');
         allBtns.forEach(b => b.disabled = true);
       };
@@ -491,27 +491,28 @@ function connectSocket(onOpenCallback) {
       case 'newQuestion':
         loadQuestionMulti(msg.question, msg.index, msg.total);
         break;
-// Dans la section socket.onmessage, trouvez le cas 'revealAnswer'
-        case 'revealAnswer':
+case 'revealAnswer':
             showingCorrection = true;
             const correctAnswers = msg.correctAnswers;
-            const userVal = normalizeAnswer(answerInput.value);
+            
+            // On vérifie la réponse : texte OU bouton
+            const userVal = normalizeAnswer(answerInput.value || currentSelectedOption);
             const isCorrect = correctAnswers.map(normalizeAnswer).includes(userVal);
 
-            correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
+            correctionDiv.textContent = `La réponse était : ${correctAnswers.join(' / ')}`;
             correctionDiv.classList.add('show');
 
-            // --- LOGIQUE CORRIGÉE : Si l'input est vide ou incorrect -> ROUGE ---
-            if (userVal !== "" && isCorrect) {
+            // On vérifie si l'utilisateur a VRAIMENT répondu quelque chose
+            const hasAnswered = userVal !== "";
+
+            if (hasAnswered && isCorrect) {
                 correctionDiv.classList.remove('incorrect');
                 correctionDiv.classList.add('correct');
             } else {
-                // Si l'utilisateur n'a pas répondu (userVal === "") ou s'est trompé
                 correctionDiv.classList.remove('correct');
                 correctionDiv.classList.add('incorrect');
             }
 
-            // On s'assure de cacher l'input et les options
             answerInput.disabled = true;
             const allBtns = optionsContainer.querySelectorAll('button');
             allBtns.forEach(b => b.disabled = true);
@@ -565,6 +566,7 @@ function loadQuestionMulti(question, index, total) {
   questionNumberDiv.textContent = `Question ${index} / ${total}`;
   questionTextDiv.textContent = question.q;
   correctionDiv.classList.remove('show');
+  currentSelectedOption = "";
   
   // Reset UI
   answerInput.value=''; 
@@ -591,12 +593,11 @@ function loadQuestionMulti(question, index, total) {
       btn.textContent = opt;
       btn.dataset.val = opt;
       btn.onclick = () => {
-        // En multi, on envoie via websocket
+        currentSelectedOption = opt; // On stocke le choix
         socket.send(JSON.stringify({
           action: 'submitAnswer',
           answer: opt
         }));
-        // On désactive visuellement pour éviter le spam
         const allBtns = optionsContainer.querySelectorAll('button');
         allBtns.forEach(b => b.disabled = true);
       };
