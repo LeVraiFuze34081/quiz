@@ -653,7 +653,7 @@ function showCorrectionMulti(correctAnswers) {
   const userVal = normalizeAnswer(answerInput.value || currentSelectedOption);
   const isCorrect = correctAnswers.map(normalizeAnswer).includes(userVal);
 
-  correctionDiv.innerHTML = `Réponse : ${correctAnswers.join(' / ')}`;
+  correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
   correctionDiv.classList.add('show');
   
   // Couleur du bandeau
