@@ -342,7 +342,7 @@ function endQuestionSolo(correctAnswers, isCorrect) {
   });
 
   // Affichage du bandeau de correction
-  correctionDiv.textContent = `La réponse était : ${correctAnswers.join(' / ')}`;
+  correctionDiv.textContent = `Réponse : ${correctAnswers.join(' / ')}`;
   correctionDiv.classList.add('show');
   
   if (isCorrect) {
@@ -641,7 +641,7 @@ function showCorrectionMulti(correctAnswers) {
   const userVal = normalizeAnswer(answerInput.value || currentSelectedOption);
   const isCorrect = correctAnswers.map(normalizeAnswer).includes(userVal);
 
-  correctionDiv.innerHTML = `La réponse était : ${correctAnswers.join(' / ')}`;
+  correctionDiv.innerHTML = `Réponse : ${correctAnswers.join(' / ')}`;
   correctionDiv.classList.add('show');
   
   // Couleur du bandeau
@@ -674,24 +674,34 @@ function handleAnswerResult(isCorrect, points, correctAnswers) {
     playerScoreDiv.textContent = `Score : ${currentScore + points}`;
 
     answerInput.disabled = true;
-
     correctionDiv.textContent = 'Bonne réponse';
     correctionDiv.classList.add('correct', 'show');
 
     showingCorrection = true;
     return;
   }
+
+  // Si c'est faux
   tries--;
   updateHearts();
-  if (tries > 0) {
+
+  // AJOUT : Si c'est un QCM/VF ou si on n'a plus de vies en mode texte
+  const isQcmOrVf = !optionsContainer.classList.contains('hidden');
+
+  if (tries <= 0 || isQcmOrVf) {
+    answerInput.disabled = true;
+    // On désactive aussi les boutons QCM s'ils ne le sont pas déjà
+    const allBtns = optionsContainer.querySelectorAll('button');
+    allBtns.forEach(b => b.disabled = true);
+
+    correctionDiv.textContent = 'Mauvaise(s) réponse(s)';
+    correctionDiv.classList.add('incorrect', 'show');
+    showingCorrection = true;
+  } else {
+    // Mode texte classique : on peut encore essayer
     answerInput.value = '';
     answerInput.disabled = false;
     answerInput.focus();
-  } else {
-    answerInput.disabled = true;
-    correctionDiv.textContent = 'Mauvaises réponses';
-    correctionDiv.classList.add('incorrect', 'show');
-    showingCorrection = true;
   }
 }
 
