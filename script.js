@@ -286,6 +286,10 @@ async function submitAnswerSolo(forceTimeout = false) {
 
   if (!val && !forceTimeout) return;
 
+  // --- CORRECTION ICI : Désactiver immédiatement pour éviter le spam ---
+  answerInput.disabled = true; 
+  // --------------------------------------------------------------------
+
   try {
     const res = await fetch('https://test-btvw.onrender.com/validate', {
         method: 'POST',
@@ -293,7 +297,11 @@ async function submitAnswerSolo(forceTimeout = false) {
         body: JSON.stringify({ id: currentQ.id, answer: answerInput.value })
     });
     
-    if (!res.ok) throw new Error('Erreur validation');
+    if (!res.ok) {
+        // En cas d'erreur serveur, on réactive pour permettre de réessayer
+        answerInput.disabled = false;
+        throw new Error('Erreur validation');
+    }
     
     const result = await res.json();
     const isCorrect = result.ok;
@@ -306,7 +314,6 @@ async function submitAnswerSolo(forceTimeout = false) {
         playerScoreDiv.textContent = `Score : ${score}`;
         endQuestionSolo(correctAnswers, true);
     } else {
-        // Logique modifiée : Si QCM ou VF, une erreur = 0 vies restantes direct
         if (currentQ.type === 'qcm' || currentQ.type === 'vf') {
             tries = 0;
         } else {
@@ -317,14 +324,17 @@ async function submitAnswerSolo(forceTimeout = false) {
             log.push({ ...currentQ, a: correctAnswers, user: answerInput.value || 'Aucune', ok: false, points: 0 });
             endQuestionSolo(correctAnswers, false);
         } else {
+            // S'il reste des vies, on réactive l'input pour la prochaine tentative
             answerInput.value = '';
+            answerInput.disabled = false; // Réactivation ici
+            answerInput.focus();
             updateHearts();
         }
     }
   } catch (e) {
       console.error(e);
-      log.push({ ...currentQ, a: ['???'], user: answerInput.value || 'Erreur', ok: false, points: 0 });
-      endQuestionSolo(['Erreur réseau'], false);
+      // Optionnel : ne pas log l'erreur tout de suite pour laisser l'utilisateur retenter
+      // ou gérer la fin de question proprement.
   }
 }
 
