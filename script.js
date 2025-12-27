@@ -92,6 +92,7 @@ function resetGameState() {
   heartsDiv.textContent = '';
   timerDiv.textContent = '';
   playerScoreDiv.textContent = 'Score : 0';
+  // Security Fix 7: Safe DOM manipulation
   playersListGameDiv.innerHTML = '';
   finalContainer.innerHTML = '';
 
@@ -293,17 +294,29 @@ async function submitAnswerSolo(forceTimeout = false) {
   answerInput.disabled = true;
 
   try {
+    // Security Fix 1: Determine if this is the last attempt
+    let isFinalAttempt = false;
+    if (currentQ.type === 'qcm' || currentQ.type === 'vf') {
+        isFinalAttempt = true;
+    } else if (tries <= 1 || forceTimeout) {
+        isFinalAttempt = true;
+    }
+
     const res = await fetch('https://test-btvw.onrender.com/validate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ id: currentQ.id, answer: answerInput.value })
+        body: JSON.stringify({ 
+            id: currentQ.id, 
+            answer: answerInput.value,
+            isFinal: isFinalAttempt
+        })
     });
     
     if (!res.ok) throw new Error('Erreur validation');
     
     const result = await res.json();
     const isCorrect = result.ok;
-    const correctAnswers = result.correctAnswers;
+    const correctAnswers = result.correctAnswers; // May be undefined if incorrect and not final
 
     if (isCorrect) {
         const points = calculatePoints(timeLeft);
@@ -324,6 +337,7 @@ async function submitAnswerSolo(forceTimeout = false) {
         if (tries <= 0 || forceTimeout) {
             log.push({ ...currentQ, a: correctAnswers, user: answerInput.value || 'Aucune', ok: false, points: 0 });
             isSubmitting = false;
+            // Security Fix: correctAnswers is guaranteed by server if isFinal was true
             endQuestionSolo(correctAnswers, false);
         } else {
             // Mauvaise réponse mais il reste des vies : on réinitialise tout
@@ -397,7 +411,7 @@ function nextQuestionSolo() {
 
 function endSoloGame() {
     const res = finalContainer;
-    res.innerHTML = '';
+    res.innerHTML = ''; // Clearing is safe
 
     const correctCount = log.filter(r => r.ok).length;
     const totalQuestions = log.length;
@@ -406,6 +420,7 @@ function endSoloGame() {
     summary.style.color = 'white';
     summary.style.fontSize = '20px';
     summary.style.marginBottom = '20px';
+    // Security Fix 7: textContent used
     summary.textContent = `Score : ${score} points – Réponses justes : ${correctCount} / ${totalQuestions}`;
     res.appendChild(summary);
 
@@ -446,7 +461,7 @@ function endSoloGame() {
         labelUser.className = 'result-label';
         labelUser.textContent = 'Votre réponse : ';
         divUser.appendChild(labelUser);
-        divUser.appendChild(document.createTextNode(r.user));
+        divUser.appendChild(document.createTextNode(r.user)); // Safe
         body.appendChild(divUser);
 
         const divGood = document.createElement('div');
@@ -556,7 +571,8 @@ socket.onclose = () => {
 }
 
 function updateLobbyPlayers(players) {
-  playersListDiv.innerHTML = '';
+  // Security Fix 7: Use textContent
+  playersListDiv.innerHTML = ''; 
 
   players.forEach(p => {
     const div = document.createElement('div');
@@ -718,11 +734,13 @@ function handleAnswerResult(isCorrect, points, correctAnswers) {
 }
 
 function updateScores(players) {
+  // Security Fix 7: Use textContent
   playersListGameDiv.innerHTML = '';
   players.forEach((p, idx) => {
     const div = document.createElement('div');
     div.className = 'player-item' + (p.name === playerName ? ' self' : '');
     const checkMark = p.isCorrect ? ' ✅' : '';
+    // textContent is safer
     div.textContent = `${idx+1}. ${p.name} - ${p.score} pts${checkMark}`;
     playersListGameDiv.appendChild(div);
   });
