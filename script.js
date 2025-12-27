@@ -76,6 +76,7 @@ let multiStarted = false;
 let currentQuestionIndex = null;
 let selected = [], idx = 0, score = 0, timer = null, timeLeft = 20, tries = 4, log = [], showingCorrection = false;
 let currentSelectedOption = "";
+let isSubmitting = false;
 
 function resetGameState() {
   clearInterval(timer);
