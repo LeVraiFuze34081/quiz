@@ -370,8 +370,7 @@ function endQuestionSolo(correctAnswers, isCorrect) {
       if (idx < selected.length) {
         loadQuestionSolo();
       } else {
-        // CORRECTION ICI : On utilise le bon nom de fonction de ton fichier script.js
-        showFinalResults();
+        endSoloGame();
       }
     }
   }, 1000);
