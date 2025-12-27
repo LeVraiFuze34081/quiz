@@ -319,9 +319,8 @@ async function submitAnswerSolo(forceTimeout = false) {
             tries = 0;
         } else {
             tries--;
-            updateHearts();
         }
-
+        updateHearts();
         if (tries <= 0 || forceTimeout) {
             log.push({ ...currentQ, a: correctAnswers, user: answerInput.value || 'Aucune', ok: false, points: 0 });
             isSubmitting = false;
@@ -331,7 +330,6 @@ async function submitAnswerSolo(forceTimeout = false) {
             answerInput.value = '';
             answerInput.disabled = false;
             answerInput.focus();
-            updateHearts();
             isSubmitting = false; // ON LIBÈRE LE VERROU ICI
         }
     }
