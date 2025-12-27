@@ -279,16 +279,17 @@ function updateHearts() {
 }
 
 async function submitAnswerSolo(forceTimeout = false) {
-  if (showingCorrection && !forceTimeout) return;
+  // Si on est déjà en train de valider ou si on montre la correction, on sort
+  if (isSubmitting || (showingCorrection && !forceTimeout)) return;
   
   const val = normalizeAnswer(answerInput.value);
   const currentQ = selected[idx];
 
   if (!val && !forceTimeout) return;
 
-  // --- CORRECTION ICI : Désactiver immédiatement pour éviter le spam ---
-  answerInput.disabled = true; 
-  // --------------------------------------------------------------------
+  // ON ACTIVE LE VERROU ET ON DÉSACTIVE L'INPUT
+  isSubmitting = true;
+  answerInput.disabled = true;
 
   try {
     const res = await fetch('https://test-btvw.onrender.com/validate', {
@@ -297,11 +298,7 @@ async function submitAnswerSolo(forceTimeout = false) {
         body: JSON.stringify({ id: currentQ.id, answer: answerInput.value })
     });
     
-    if (!res.ok) {
-        // En cas d'erreur serveur, on réactive pour permettre de réessayer
-        answerInput.disabled = false;
-        throw new Error('Erreur validation');
-    }
+    if (!res.ok) throw new Error('Erreur validation');
     
     const result = await res.json();
     const isCorrect = result.ok;
@@ -312,6 +309,9 @@ async function submitAnswerSolo(forceTimeout = false) {
         score += points;
         log.push({ ...currentQ, a: correctAnswers, user: answerInput.value || 'Aucune', ok: true, points });
         playerScoreDiv.textContent = `Score : ${score}`;
+        
+        // On libère le verrou avant de passer à la suite
+        isSubmitting = false; 
         endQuestionSolo(correctAnswers, true);
     } else {
         if (currentQ.type === 'qcm' || currentQ.type === 'vf') {
@@ -322,19 +322,21 @@ async function submitAnswerSolo(forceTimeout = false) {
 
         if (tries <= 0 || forceTimeout) {
             log.push({ ...currentQ, a: correctAnswers, user: answerInput.value || 'Aucune', ok: false, points: 0 });
+            isSubmitting = false;
             endQuestionSolo(correctAnswers, false);
         } else {
-            // S'il reste des vies, on réactive l'input pour la prochaine tentative
+            // Mauvaise réponse mais il reste des vies : on réinitialise tout
             answerInput.value = '';
-            answerInput.disabled = false; // Réactivation ici
+            answerInput.disabled = false;
             answerInput.focus();
             updateHearts();
+            isSubmitting = false; // ON LIBÈRE LE VERROU ICI
         }
     }
   } catch (e) {
       console.error(e);
-      // Optionnel : ne pas log l'erreur tout de suite pour laisser l'utilisateur retenter
-      // ou gérer la fin de question proprement.
+      isSubmitting = false; // LIBÉRATION EN CAS D'ERREUR
+      answerInput.disabled = false;
   }
 }
 
