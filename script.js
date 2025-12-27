@@ -319,6 +319,7 @@ async function submitAnswerSolo(forceTimeout = false) {
             tries = 0;
         } else {
             tries--;
+            updateHearts();
         }
 
         if (tries <= 0 || forceTimeout) {
