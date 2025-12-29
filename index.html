@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Clashtax</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="menu-container" class="container">
+<div>
+  <h1 style="text-align: center;">Quiz Clashtax</h1>
+  <p>Le seul et unique quiz au monde dédié à 100% au Clashtax.</p>
+</div>
+  <div class="menu-grid">
+    <button id="solo-btn" class="big-card-btn">
+      <span class="btn-title">Solo</span>
+      <span class="btn-desc" id="solo-desc"></span>
+    </button>
+    
+    <button id="multi-btn" class="big-card-btn">
+      <span class="btn-title">Multijoueur</span>
+      <span class="btn-desc" id="multi-desc"></span>
+    </button>
+  </div>
+</div>
+
+<div id="solo-container" class="container hidden">
+  <h1>Quiz Solo</h1>
+  <label>Nombre de questions</label>
+  <input type="number" id="solo-question-count" placeholder="100 questions maximum" value="10" />
+  <button id="start-solo-btn">Commencer</button>
+  <button id="quit-solo-btn" class="red-button">Retour</button>
+</div>
+
+<div id="multi-container" class="container hidden">
+  <h1>Quiz Multijoueur</h1>
+  <label>Pseudo</label>
+  <input type="text" id="multi-pseudo" maxlength="20" placeholder="Votre pseudo" />
+  <button id="create-room-btn">Créer une partie</button>
+  <button id="join-room-btn">Rejoindre une partie</button>
+  <button id="quit-multi-btn" class="red-button">Retour</button>
+</div>
+
+<div id="join-container" class="container hidden">
+  <h1>Rejoindre une partie</h1>
+  <label>Code de la room</label>
+  <input type="text" id="join-room-code" maxlength="4" style="text-transform: uppercase;" />
+  <button id="join-room-confirm-btn">Valider</button>
+  <button id="quit-join-btn" class="red-button">Annuler</button>
+</div>
+
+<div id="lobby-container" class="container hidden">
+  <h1>Lobby</h1>
+  
+  <div class="room-code-wrapper">
+    <div style="font-size: 14px; text-transform: uppercase; color: var(--muted);">Code de la room</div>
+    <span id="room-id-display" class="room-code-display">----</span>
+  </div>
+
+  <div style="width:100%; text-align:center; margin-bottom:10px; color:var(--muted);">Joueurs connectés :</div>
+  <div id="player-list"></div>
+
+  <div id="host-controls" style="display:none; width:100%; text-align: center;">
+    <div style="margin-bottom: 10px;">
+      <label>Nombre de questions : </label>
+      <input type="number" id="multi-question-count" min="1" value="10" style="width: 80px; text-align: center; padding: 8px;" />
+    </div>
+    <button id="start-multi-btn" style="width: 100%;">Démarrer la partie</button>
+  </div>
+<div id="waiting-host-msg" style="display:none; color: var(--muted); font-size: 18px; margin-top: 15px; text-align: center;">En attente de l'hôte pour démarrer la partie...</div>
+  <button id="quit-lobby-btn" class="btn-danger">Quitter le salon</button>
+</div>
+
+<div id="game-container" class="container hidden">
+  <div style="display:flex; width:100%; height:100%;">
+    <div id="game-left">
+      <div id="players-list"></div>
+      <div id="player-score">Score : 0</div>
+    </div>
+    <div id="game-right">
+      <div id="question-number"></div>
+      <div id="question-text"></div> 
+      <div id="correction"></div>
+      <div id="answer-zone">
+        <input id="answer-input" placeholder="Votre réponse" />
+        <div id="options-container" class="hidden"></div>
+        <div id="hearts"></div>
+      </div>
+      <div id="timer"></div>
+    </div>
+  </div>
+</div>
+
+<div id="final-container" class="container hidden"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
